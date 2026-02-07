@@ -1,0 +1,22 @@
+{
+  "name": "liver-cirrhosis-detection",
+  "version": "1.0.0",
+  "description": "Liver Cirrhosis Stage Detection API",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+  "train": "node train.js",
+  "start": "node server.js",
+  "dev": "nodemon server.js"
+},
+  "dependencies": {
+    "csv-parser": "^3.2.0",
+    "dotenv": "^17.2.4",
+    "express": "^5.2.1",
+    "mathjs": "^15.1.0",
+    "ml-random-forest": "^2.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}

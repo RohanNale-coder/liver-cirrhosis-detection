@@ -1,0 +1,19 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "liver-cirrhosis-db",
+            "group": "local",
+            "database": "liver_cirrhosis.db"
+        },
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "database": "pbc",
+            "name": "liver-cirrhosis-db",
+            "group": "local"
+        }
+    ],
+    "sqltools.useNodeRuntime": true
+}

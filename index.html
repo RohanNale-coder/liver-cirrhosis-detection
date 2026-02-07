@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liver Cirrhosis Stage Prediction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .form-container {
+            padding: 40px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+        
+        .label-info {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 2px;
+        }
+        
+        input[type="number"],
+        select {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        select {
+            cursor: pointer;
+            background-color: white;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        button {
+            padding: 14px 30px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+        }
+        
+        .btn-predict {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-predict:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-reset {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-reset:hover {
+            background: #e0e0e0;
+        }
+        
+        .result-container {
+            background: #f9f9f9;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .result-container.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result-content {
+            text-align: center;
+        }
+        
+        .stage-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 5px solid #667eea;
+        }
+        
+        .stage-number {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+        
+        .stage-description {
+            font-size: 1.3em;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .stage-info {
+            font-size: 0.95em;
+            color: #666;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        .stage-1 {
+            border-left-color: #4caf50;
+        }
+        
+        .stage-1 .stage-number {
+            color: #4caf50;
+        }
+        
+        .stage-2 {
+            border-left-color: #ff9800;
+        }
+        
+        .stage-2 .stage-number {
+            color: #ff9800;
+        }
+        
+        .stage-3 {
+            border-left-color: #f44336;
+        }
+        
+        .stage-3 .stage-number {
+            color: #f44336;
+        }
+        
+        .error-message {
+            background: #ffebee;
+            border: 1px solid #f44336;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Liver Cirrhosis Detection</h1>
+            <p>Predict disease stage using clinical parameters</p>
+        </div>
+        
+        <div class="form-container">
+            <form id="predictionForm">
+                <div class="form-grid">
+                    <!-- N_Days -->
+                    <div class="form-group">
+                        <label for="n_days">
+                            N_Days
+                            <div class="label-info">Range: 0-3000 days</div>
+                        </label>
+                        <input type="number" id="n_days" name="n_days" min="0" max="3000" required>
+                    </div>
+                    
+                    <!-- Status -->
+                    <div class="form-group">
+                        <label for="status">
+                            Status
+                            <div class="label-info">C/CL/D</div>
+                        </label>
+                        <select id="status" name="status" required>
+                            <option value="">Select Status</option>
+                            <option value="C">C - Censored</option>
+                            <option value="CL">CL - Censored (Liver TX)</option>
+                            <option value="D">D - Death</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Drug -->
+                    <div class="form-group">
+                        <label for="drug">
+                            Drug
+                            <div class="label-info">Type of drug</div>
+                        </label>
+                        <select id="drug" name="drug" required>
+                            <option value="">Select Drug</option>
+                            <option value="Placebo">Placebo</option>
+                            <option value="D-penicillamine">D-penicillamine</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Age -->
+                    <div class="form-group">
+                        <label for="age">
+                            Age
+                            <div class="label-info">Range: 0-100 years</div>
+                        </label>
+                        <input type="number" id="age" name="age" min="0" max="100" required>
+                    </div>
+                    
+                    <!-- Sex -->
+                    <div class="form-group">
+                        <label for="sex">
+                            Sex
+                            <div class="label-info">M/F</div>
+                        </label>
+                        <select id="sex" name="sex" required>
+                            <option value="">Select Sex</option>
+                            <option value="M">M - Male</option>
+                            <option value="F">F - Female</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Ascites -->
+                    <div class="form-group">
+                        <label for="ascites">
+                            Ascites
+                            <div class="label-info">Y/N</div>
+                        </label>
+                        <select id="ascites" name="ascites" required>
+                            <option value="">Ascites Present?</option>
+                            <option value="Y">Y - Yes</option>
+                            <option value="N">N - No</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Hepatomegaly -->
+                    <div class="form-group">
+                        <label for="hepatomegaly">
+                            Hepatomegaly
+                            <div class="label-info">Y/N</div>
+                        </label>
+                        <select id="hepatomegaly" name="hepatomegaly" required>
+                            <option value="">Hepatomegaly Present?</option>
+                            <option value="Y">Y - Yes</option>
+                            <option value="N">N - No</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Spiders -->
+                    <div class="form-group">
+                        <label for="spiders">
+                            Spiders
+                            <div class="label-info">Y/N</div>
+                        </label>
+                        <select id="spiders" name="spiders" required>
+                            <option value="">Spiders Present?</option>
+                            <option value="Y">Y - Yes</option>
+                            <option value="N">N - No</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Edema -->
+                    <div class="form-group">
+                        <label for="edema">
+                            Edema
+                            <div class="label-info">N/S/Y</div>
+                        </label>
+                        <select id="edema" name="edema" required>
+                            <option value="">Select Edema Status</option>
+                            <option value="N">N - No edema/no diuretic therapy</option>
+                            <option value="S">S - Without diuretics/resolved by diuretics</option>
+                            <option value="Y">Y - Despite diuretic therapy</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Bilirubin -->
+                    <div class="form-group">
+                        <label for="bilirubin">
+                            Bilirubin
+                            <div class="label-info">mg/dl (0-10)</div>
+                        </label>
+                        <input type="number" id="bilirubin" name="bilirubin" min="0" max="10" step="0.1" required>
+                    </div>
+                    
+                    <!-- Cholesterol -->
+                    <div class="form-group">
+                        <label for="cholesterol">
+                            Cholesterol
+                            <div class="label-info">mg/dl (0-500)</div>
+                        </label>
+                        <input type="number" id="cholesterol" name="cholesterol" min="0" max="500" step="0.1" required>
+                    </div>
+                    
+                    <!-- Albumin -->
+                    <div class="form-group">
+                        <label for="albumin">
+                            Albumin
+                            <div class="label-info">gm/dl (0-5)</div>
+                        </label>
+                        <input type="number" id="albumin" name="albumin" min="0" max="5" step="0.1" required>
+                    </div>
+                    
+                    <!-- Copper -->
+                    <div class="form-group">
+                        <label for="copper">
+                            Copper
+                            <div class="label-info">ug/day (0-200)</div>
+                        </label>
+                        <input type="number" id="copper" name="copper" min="0" max="200" step="0.1" required>
+                    </div>
+                    
+                    <!-- Alk_Phos -->
+                    <div class="form-group">
+                        <label for="alk_phos">
+                            Alk_Phos
+                            <div class="label-info">U/liter (0-3000)</div>
+                        </label>
+                        <input type="number" id="alk_phos" name="alk_phos" min="0" max="3000" step="0.1" required>
+                    </div>
+                    
+                    <!-- SGOT -->
+                    <div class="form-group">
+                        <label for="sgot">
+                            SGOT
+                            <div class="label-info">U/ml (0-500)</div>
+                        </label>
+                        <input type="number" id="sgot" name="sgot" min="0" max="500" step="0.1" required>
+                    </div>
+                    
+                    <!-- Triglycerides -->
+                    <div class="form-group">
+                        <label for="triglycerides">
+                            Triglycerides
+                            <div class="label-info">mg/dl (0-1000)</div>
+                        </label>
+                        <input type="number" id="triglycerides" name="triglycerides" min="0" max="1000" step="0.1" required>
+                    </div>
+                    
+                    <!-- Platelets -->
+                    <div class="form-group">
+                        <label for="platelets">
+                            Platelets
+                            <div class="label-info">per cubic ml/1000 (0-900)</div>
+                        </label>
+                        <input type="number" id="platelets" name="platelets" min="0" max="900" step="0.1" required>
+                    </div>
+                    
+                    <!-- Prothrombin -->
+                    <div class="form-group">
+                        <label for="prothrombin">
+                            Prothrombin
+                            <div class="label-info">seconds (0-30)</div>
+                        </label>
+                        <input type="number" id="prothrombin" name="prothrombin" min="0" max="30" step="0.1" required>
+                    </div>
+                </div>
+                
+                <!-- Buttons -->
+                <div class="button-group">
+                    <button type="submit" class="btn-predict">🔮 Predict Stage</button>
+                    <button type="reset" class="btn-reset">🔄 Clear Form</button>
+                </div>
+            </form>
+            
+            <!-- Loading Spinner -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing patient data...</p>
+            </div>
+            
+            <!-- Result Container -->
+            <div class="result-container" id="resultContainer">
+                <div class="result-content">
+                    <h2>🎯 Prediction Result</h2>
+                    <div class="stage-box" id="stageBox">
+                        <div class="stage-number" id="stageNumber">-</div>
+                        <div class="stage-description" id="stageMeaning">-</div>
+                        <div class="stage-info" id="stageInfo">-</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Error Message -->
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+    </div>
+    
+    <script>
+        const form = document.getElementById('predictionForm');
+        const resultContainer = document.getElementById('resultContainer');
+        const stageBox = document.getElementById('stageBox');
+        const stageNumber = document.getElementById('stageNumber');
+        const stageMeaning = document.getElementById('stageMeaning');
+        const stageInfo = document.getElementById('stageInfo');
+        const errorMessage = document.getElementById('errorMessage');
+        const loading = document.getElementById('loading');
+        
+        const stageDescriptions = {
+            1: {
+                meaning: 'Stage 1 - Early Stage',
+                info: 'Early stage of liver cirrhosis. The disease is in its initial phase. Close monitoring and treatment are recommended.'
+            },
+            2: {
+                meaning: 'Stage 2 - Intermediate Stage',
+                info: 'Intermediate stage of liver cirrhosis. Disease progression is moderate. Regular medical supervision is essential.'
+            },
+            3: {
+                meaning: 'Stage 3 - Advanced Stage',
+                info: 'Advanced stage of liver cirrhosis. Significant liver damage detected. Urgent medical intervention may be required.'
+            }
+        };
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Clear previous errors and results
+            errorMessage.classList.remove('show');
+            resultContainer.classList.remove('show');
+            loading.classList.add('show');
+            
+            // Create form data object
+            const formData = {
+                n_days: form.n_days.value,
+                status: form.status.value,
+                drug: form.drug.value,
+                age: form.age.value,
+                sex: form.sex.value,
+                ascites: form.ascites.value,
+                hepatomegaly: form.hepatomegaly.value,
+                spiders: form.spiders.value,
+                edema: form.edema.value,
+                bilirubin: form.bilirubin.value,
+                cholesterol: form.cholesterol.value,
+                albumin: form.albumin.value,
+                copper: form.copper.value,
+                alk_phos: form.alk_phos.value,
+                sgot: form.sgot.value,
+                triglycerides: form.triglycerides.value,
+                platelets: form.platelets.value,
+                prothrombin: form.prothrombin.value
+            };
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Prediction failed. Please check your input values.');
+                }
+                
+                const result = await response.json();
+                loading.classList.remove('show');
+                
+                // Display result
+                const stage = result.predicted_stage;
+                stageNumber.textContent = stage;
+                stageMeaning.textContent = stageDescriptions[stage]?.meaning || 'Unknown Stage';
+                stageInfo.textContent = stageDescriptions[stage]?.info || '';
+                
+                stageBox.className = `stage-box stage-${stage}`;
+                resultContainer.classList.add('show');
+                
+                // Scroll to result
+                setTimeout(() => {
+                    resultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 100);
+                
+            } catch (error) {
+                loading.classList.remove('show');
+                errorMessage.textContent = '❌ Error: ' + error.message;
+                errorMessage.classList.add('show');
+            }
+        });
+    </script>
+</body>
+</html>
